@@ -704,7 +704,7 @@ extras() {
   ### Audio stuff
   espeak-ng
   qpwgraph
-  pear-desktop
+  pear-desktop-bin
   audiorelay
   tenacity
 
