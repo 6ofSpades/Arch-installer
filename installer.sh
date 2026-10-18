@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 set -e
 set -u
 set -o pipefail
@@ -19,14 +18,14 @@ base_system() {
     exit 1
   fi
 
-  pacman -Sy --noconfirm gum || ( echo 'We cant install gum. We sad ;(' && exit 1 )
+  pacman -Sy --noconfirm gum || (echo 'We cant install gum. We sad ;(' && exit 1)
 
   echo
   # Gum confirmation
   gum style \
-	--foreground 21 --border-foreground 54 --border double \
-	--align center --width 50 --margin "1 1" --padding "2 4" \
-	'Gum installed!' 'Things will be just a tiny bit fancy now B)' 'You still have to type some things though cause you need to suffer >:('
+    --foreground 21 --border-foreground 54 --border double \
+    --align center --width 50 --margin "1 1" --padding "2 4" \
+    'Gum installed!' 'Things will be just a tiny bit fancy now B)' 'You still have to type some things though cause you need to suffer >:('
 
   echo "Setting timezone thingys..."
   # timedatectl set-timezone $TIMEZONE
@@ -48,7 +47,7 @@ base_system() {
   done
 
   gum spin -s line --title "Wiping disk..." -- \
-  bash -c '
+    bash -c '
     umount -R /mnt 2>/dev/null || true
     swapoff -a 2>/dev/null || true
     cryptsetup close main 2>/dev/null || true
@@ -58,21 +57,21 @@ base_system() {
 
   log "Partitioning..."
   (
-  echo g # Create a new empty GPT partition table
-  echo n # Add a new partition
-  echo 1 # Partition number
-  echo   # First sector (Accept default: 1)
-  echo +512MiB  # Last sector (Accept default: varies)
-  echo t  # Change partition type
-  echo 1  # Choose uefi for partition type
-  echo n
-  echo 2
-  echo  
-  echo  
-  echo t
-  echo 2
-  echo 23
-  echo w # Write changes
+    echo g       # Create a new empty GPT partition table
+    echo n       # Add a new partition
+    echo 1       # Partition number
+    echo         # First sector (Accept default: 1)
+    echo +512MiB # Last sector (Accept default: varies)
+    echo t       # Change partition type
+    echo 1       # Choose uefi for partition type
+    echo n
+    echo 2
+    echo
+    echo
+    echo t
+    echo 2
+    echo 23
+    echo w # Write changes
   ) | fdisk "$disk"
 
   # Partition suffix
@@ -88,12 +87,12 @@ base_system() {
   while true; do
     read -p "Do you wanna do disk encryption stuff? [y/n] " encryption
     case "$encryption" in
-      y|n)
-        ;;
-      *)
-        echo "Type y or n ^^"
-        continue
-        ;;
+    y | n)
+      ;;
+    *)
+      echo "Type y or n ^^"
+      continue
+      ;;
     esac
     if [[ "$encryption" =~ ^[Yy]$ ]]; then
       gum confirm || continue
@@ -123,12 +122,12 @@ base_system() {
   while true; do
     read -rp "Do you want a swapfile as a fallback to ZRAM? [y/n] " swap
     case "$swap" in
-      y|n)
-        break
-        ;;
-      *)
-        echo "y or n pls >.<"
-        ;;
+    y | n)
+      break
+      ;;
+    *)
+      echo "y or n pls >.<"
+      ;;
     esac
   done
   if [[ "$swap" == "y" ]]; then
@@ -182,16 +181,16 @@ base_system() {
   while true; do
     read -rp "Select mirrors with Reflector? This often just makes things slower for some reason -_- [y/n] " mirrors
     case "$mirrors" in
-      y|n)
-        break
-        ;;
-      *)
-        echo "You have to type y or n :("
-        ;;
+    y | n)
+      break
+      ;;
+    *)
+      echo "You have to type y or n :("
+      ;;
     esac
   done
   if [[ "$mirrors" == "y" ]]; then
-    gum spin -s line --title "Well, this will prob take some minutes." -- reflector --latest 50 --sort rate --save /etc/pacman.d/mirrorlist
+    gum spin -s line --title "Well, this will prob take some minutes." -- reflector --latest 5 --protocol https --age 12 --sort rate --save /etc/pacman.d/mirrorlist
     echo "Done."
   fi
 
@@ -199,23 +198,23 @@ base_system() {
   while true; do
     read -rp "Are you rocking Intel or AMD cpu today? [intel/amd] " cpu
     case "$cpu" in
-      intel|amd)
-        break
-        ;;
-      *)
-        echo "Type intel or amd :|"
-        ;;
+    intel | amd)
+      break
+      ;;
+    *)
+      echo "Type intel or amd :|"
+      ;;
     esac
   done
   echo "Wow :O"
   pacstrap -K /mnt base linux linux-firmware linux-headers ${cpu}-ucode networkmanager neovim man-db man-pages git base-devel grub efibootmgr btrfs-progs
 
   log "Generating fstab..."
-  genfstab -U /mnt >> /mnt/etc/fstab
+  genfstab -U /mnt >>/mnt/etc/fstab
 
   if [[ "$swap" == "y" ]]; then
     echo "Persisting swapfile in fstab..."
-    echo "/swap/swapfile none swap defaults 0 0" >> /mnt/etc/fstab
+    echo "/swap/swapfile none swap defaults 0 0" >>/mnt/etc/fstab
   fi
 
   cd
@@ -254,12 +253,12 @@ user_environment() {
   echo "Setting localization stuff..."
   sed -i '/en_US.UTF-8/s/^#//' /etc/locale.gen
   locale-gen
-  echo "LANG=en_US.UTF-8" > /etc/locale.conf
-  echo "KEYMAP=br-abnt2" > /etc/vconsole.conf
+  echo "LANG=en_US.UTF-8" >/etc/locale.conf
+  echo "KEYMAP=br-abnt2" >/etc/vconsole.conf
 
   log "Hostname"
   hostname=$(gum input --prompt "Hostname: " --placeholder "What will be your hostname?")
-  echo "$hostname" > /etc/hostname
+  echo "$hostname" >/etc/hostname
 
   if [[ "${1:-}" == "encryption" ]]; then
     echo
@@ -323,14 +322,24 @@ user_environment() {
 
   log "Sudoers overrides"
   echo "Enabling sudo for wheel group..."
-  echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel
+  echo "%wheel ALL=(ALL:ALL) ALL" >/etc/sudoers.d/10-wheel
   chmod 440 /etc/sudoers.d/10-wheel
   echo "Overriding sudoers systemd_editor..."
-  echo 'Defaults env_keep += "SYSTEMD_EDITOR"' > /etc/sudoers.d/20-systemd_editor
+  echo 'Defaults env_keep += "SYSTEMD_EDITOR"' >/etc/sudoers.d/20-systemd_editor
   chmod 440 /etc/sudoers.d/20-systemd_editor
 
+  log "Enabling SysRq..."
+  echo "kernel.sysrq=1" >/etc/sysctl.d/99-sysctl.conf
+
+  # Increase the per-process file descriptor limit.
+  # Useful for long-lived desktop applications (Kitty, browsers, IDEs, etc.).
+  # 8192 is a conservative increase over the traditional default of 1024.
+  log "Increasing nofile..."
+  echo "$username  soft  nofile  8192" >>/etc/security/limits.conf
+  echo "$username  hard  nofile  524288" >>/etc/security/limits.conf
+
   log "Setting IO schedulers rules thingy..."
-  cat > /etc/udev/rules.d/60-ioschedulers.rules <<EOF
+  cat >/etc/udev/rules.d/60-ioschedulers.rules <<EOF
   # HDD
   ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
 
@@ -343,7 +352,7 @@ EOF
 
   log "Setting ZRAM..."
   pacman -S --noconfirm zram-generator
-  cat > /etc/systemd/zram-generator.conf <<EOF
+  cat >/etc/systemd/zram-generator.conf <<EOF
   [zram0]
   zram-size = ram / 2
   compression-algorithm = zstd
@@ -351,7 +360,7 @@ EOF
 
   log "Creating btrfs-swap-resize script..."
   # Even if you choose not to swap, it doesn't hurt to keep this stored just in case
-  cat > /usr/local/bin/btrfs-resize-swap <<'EOF'
+  cat >/usr/local/bin/btrfs-resize-swap <<'EOF'
   #!/bin/bash
   set -e
 
@@ -384,12 +393,11 @@ EOF
   log "Installing Snapper and BTRFS stuff..."
   pacman -S --noconfirm snapper grub-btrfs
 
-
   # Now we start the installation of packages I most certainly want
 
   log "Trying to install a lot of things that you certainly can't live without >.< ..."
   echo "Temporarily enabling passwordless sudo for wheel..."
-  cat > /etc/sudoers.d/99-wheel-nopasswd << 'EOF'
+  cat >/etc/sudoers.d/99-wheel-nopasswd <<'EOF'
   %wheel ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
   chmod 440 /etc/sudoers.d/99-wheel-nopasswd
@@ -414,7 +422,7 @@ EOF
   ' /etc/pacman.conf
 
   log "Trying to install yay without failing miserably..."
-  pacman -S --needed --noconfirm git base-devel 
+  pacman -S --needed --noconfirm git base-devel
   su - "$username" -c "cd /home/$username && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si --noconfirm && cd .. && rm -rf yay"
 
   echo "Now the rest of things..."
@@ -423,14 +431,23 @@ EOF
       snapper-rollback \
       zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting zsh-vi-mode \
       openssh inotify-tools pacman-contrib \
-      yazi 7zip fd jq bc fzf zoxide ripgrep trash-cli autotrash \
-      plocate gdu downgrade npm ufw tufw-git btop tlrc \
+      yazi zip unzip 7zip fd jq bc fzf zoxide ripgrep ripgrep-all trash-cli autotrash \
+      plocate gdu downgrade npm ufw btop tlrc \
       paccache-hook yaycache yaycache-hook
 
     # snapper rollback script so you can do rollback super easily
     # plus a bunch of stuff that is hard to live without
-    # tufw-git version cause stable version seems to be maintained by another person that not the author
   '
+
+  # now we configure plocate to work correctly with btrfs
+  echo "Configuring plocate..."
+  sed -i \
+    -e 's/^PRUNE_BIND_MOUNTS[[:space:]]*=[[:space:]]*"yes"/PRUNE_BIND_MOUNTS = "no"/' \
+    -e '/^PRUNEPATHS[[:space:]]*=/ {
+          /\/\.snapshots/! s/"$/ \/.snapshots"/
+          /\/btrfsroot/! s/"$/ \/btrfsroot"/
+        }' \
+    /etc/updatedb.conf
 
   clean-cache
 
@@ -447,17 +464,17 @@ EOF
   # manually create the autotrash timer cause the command to auto do it doesn't work for some reason
   mkdir -p "/home/$username/.config/systemd/user"
 
-  cat > "/home/$username/.config/systemd/user/autotrash.service" <<'EOF'
+  cat >"/home/$username/.config/systemd/user/autotrash.service" <<'EOF'
   [Unit]
   Description=Empty trash
   Documentation=https://github.com/bneijt/autotrash
 
   [Service]
   Type=oneshot
-  ExecStart="/usr/bin/autotrash" -d 30
+  ExecStart="/usr/bin/autotrash" -d 15
 EOF
 
-  cat > "/home/$username/.config/systemd/user/autotrash.timer" <<'EOF'
+  cat >"/home/$username/.config/systemd/user/autotrash.timer" <<'EOF'
   [Unit]
   Description=Empty trash
 
@@ -484,7 +501,7 @@ EOF
   # always clear cache and keep 0 packages for both pacman and yay
   echo "Configuring paccache-hook and yaycache-hook"
   # paccache hook config
-  cat > /etc/paccache-hook.conf <<'EOF'
+  cat >/etc/paccache-hook.conf <<'EOF'
   extra_args=()
   cache_dirs=()
 
@@ -500,7 +517,7 @@ EOF
 EOF
 
   # yaycache hook config
-  cat > /etc/yaycache-hook.conf <<'EOF'
+  cat >/etc/yaycache-hook.conf <<'EOF'
   extra_args=-v
   cache_dirs=()
 
@@ -519,12 +536,12 @@ EOF
   while true; do
     read -rp "Hyprland or full hacker TTY setup? [hypr/hacker] " setup
     case "$setup" in
-      hypr|hacker)
-        break
-        ;;
-      *)
-        echo "Type 'hypr' or 'hacker' -_-"
-        ;;
+    hypr | hacker)
+      break
+      ;;
+    *)
+      echo "Type 'hypr' or 'hacker' -_-"
+      ;;
     esac
   done
   if [[ "$setup" == "hypr" ]]; then
@@ -545,6 +562,14 @@ EOF
       # These are only available on the AUR cause life is sad and my card is old ;(
     '
 
+    # append nvidia necessary thingy
+    # sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"|GRUB_CMDLINE_LINUX_DEFAULT=\"\1 nvidia.NVreg_PreserveVideoMemoryAllocations=1\"|" /etc/default/grub
+
+    # enable necessary services
+    systemctl enable nvidia-suspend.service
+    systemctl enable nvidia-hibernate.service
+    systemctl enable nvidia-resume.service
+
     clean-cache
 
     log "Installing Hyprland and a lot of DE-like thingys..."
@@ -556,17 +581,16 @@ EOF
     # Now the actual stuff
     su - "$username" -c '
       yay -S --needed --noconfirm \
-        qt5-wayland qt6-wayland hyprland hyprpicker hyprsunset hypridle hyprlock hyprcursor \
+        qt5-wayland qt6-wayland hyprland hypridle hyprlock \
         xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
         polkit hyprpolkitagent xdg-user-dirs portmaster-bin \
-        swww kitty rofi rofi-qalc-git rofimoji-git rofi-rbw dunst wlogout waybar \
-        wvkbd-git wl-kbptr wl-ime-type ydotool \
-        noto-fonts noto-fonts-emoji ttf-jetbrains-mono-nerd \
-        clipvault wl-clipboard \
-        grim flameshot swayimg \
-        zen-browser-bin vesktop-bin \
-        mpv resvg poppler ffmpeg imagemagick \
-        proton-vpn-gtk-app proton-vpn-cli
+        kitty rofi \
+        wvkbd-git \
+        noto-fonts ttf-jetbrains-mono-nerd \
+        clipse clipvault wl-clipboard \
+        zen-browser-bin vesktop-bin signal-desktop \
+        mpv resvg poppler ffmpeg imagemagick mediainfo \
+        proton-vpn-cli
 
       # Create the default user directories
       xdg-user-dirs-update
@@ -577,6 +601,7 @@ EOF
     gum confirm --default "Install dotfyles? :)" && dotfyles="y" || dotfyles="n"
     if [[ "$dotfyles" == "y" ]]; then
       git clone https://github.com/6ofSpades/Dotfyles.git "/home/$username/Dotfyles"
+      chown -R "$username:$username" "/home/$username/Dotfyles"
 
       dotfiles_mode=$(gum choose \
         --header "Choose dotfiles installation mode:" \
@@ -598,12 +623,12 @@ EOF
     while true; do
       read -rp "Are you feeling like a gamer? [y/n] " gamer
       case "$gamer" in
-        y|n)
-          break
-          ;;
-        *)
-          echo "Stop mistyping >:("
-          ;;
+      y | n)
+        break
+        ;;
+      *)
+        echo "Stop mistyping >:("
+        ;;
       esac
     done
     if [[ "$gamer" == "y" ]]; then
@@ -611,12 +636,16 @@ EOF
 
       su - "$username" -c '
         yay -S --needed --noconfirm \
-          steam \
-          nsnake
+          nsnake \
+          gamescope lib32-gamescope-plus \
+          gamemode lib32-gamemode
       '
 
       pacman -S --noconfirm flatpak
+      flatpak install -y --or-update flathub com.valvesoftware.Steam || echo "Something failed while installing the flatpak"
       flatpak install -y --or-update flathub net.lutris.Lutris || echo "Something failed while installing the flatpak"
+      flatpak install -y --or-update flathub com.vysp3r.ProtonPlus || echo "Something failed while installing the flatpak"
+      flatpak install -y --or-update flathub org.freedesktop.Platform.VulkanLayer.gamescope || echo "Something failed while installing the flatpak"
 
       clean-cache
 
@@ -641,12 +670,12 @@ virtualization() {
     while true; do
       read -rp "Install VM / virtualization thingys? [y/n] " vm
       case "$vm" in
-        y|n)
-          break
-          ;;
-        *)
-          echo "You don't know how to type -_-"
-          ;;
+      y | n)
+        break
+        ;;
+      *)
+        echo "You don't know how to type -_-"
+        ;;
       esac
     done
     if [[ "$vm" == "y" ]]; then
@@ -668,6 +697,17 @@ virtualization() {
         ' || echo "VMWare installation failed"
       fi
 
+      gum confirm --default "Install Waydroid?" && waydroid="y" || waydroid="n"
+      if [[ "$waydroid" == "y" ]]; then
+        su - "$username" -c '
+          yay -S --needed --noconfirm \
+            waydroid
+        ' || echo "Waydroid installation failed"
+
+        waydroid init
+        systemctl enable waydroid-container.service
+      fi
+
       clean-cache
 
       # creating directory for you to put the VM thingys
@@ -675,6 +715,8 @@ virtualization() {
 
       # Enable the libvirt service
       systemctl enable libvirtd
+      # add user to the libvirtd group
+      usermod -aG libvirt "$username"
 
       # if [[ "$vmware" == "y" ]]; then
       #   systemctl enable vmware-networks-configuration.service
@@ -695,6 +737,7 @@ extras() {
   ### Editing stuff
   inkscape
   kolourpaint
+  pinta
   gimp
   krita
   blender
@@ -732,10 +775,13 @@ extras() {
   solaar
   flatseal
   upscayl-bin
+  ttf-ms-fonts
+  ttf-liberation
+  surge
   "
-### Gaming?
-# sunshine-bin
-# sunshine installation doesn't work in chroot for some reason
+  ### Gaming?
+  # sunshine-bin
+  # sunshine installation doesn't work in chroot for some reason
 
   # Prompt selection
   SELECTED=$(echo "$OPTIONAL_PKGS" | gum choose --height 40 --no-limit --header "Select the packages you want installed
@@ -745,7 +791,7 @@ extras() {
   # Convert to sanitized array
   mapfile -t OPTIONAL_PKGS < <(
     printf '%s\n' "$SELECTED" |
-    grep -vE '^[[:space:]]*(#|$)'
+      grep -vE '^[[:space:]]*(#|$)'
   )
 
   # Mullvad needs an extra step for the installation to work
@@ -756,12 +802,20 @@ extras() {
     '
   fi
 
-  if (( ${#OPTIONAL_PKGS[@]} > 0 )); then
+  if ((${#OPTIONAL_PKGS[@]} > 0)); then
     log "Installing the things you selected..."
     # Join array with spaces and install
     su - "$username" -c "yay -S --needed --noconfirm ${OPTIONAL_PKGS[*]}"
   else
     log "Nothing to install."
+  fi
+
+  # to use wireshark as a normal user you need to add yourself to wireshark user group
+  # https://wiki.archlinux.org/title/Wireshark
+  # so we'll do that already
+  if [[ "${OPTIONAL_PKGS[*]}" == *"wireshark"* ]]; then
+    echo "Adding yourself to the Wireshark group"
+    usermod -aG wireshark "$username"
   fi
 }
 
@@ -782,13 +836,13 @@ snapper_config() {
   mount /.snapshots
   # mount -o noatime,ssd,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots "$part2" /mnt/.snapshots
 
-  grub-mkconfig -o /boot/grub/grub.cfg  # the rebuild the grub config
+  grub-mkconfig -o /boot/grub/grub.cfg # the rebuild the grub config
 
   sed -i "s|^TIMELINE_CREATE=.*|TIMELINE_CREATE=\"yes\"|" /etc/snapper/configs/root
   sed -i "s|^TIMELINE_CLEANUP=.*|TIMELINE_CLEANUP=\"yes\"|" /etc/snapper/configs/root
   sed -i "s|^TIMELINE_MIN_AGE=.*|TIMELINE_MIN_AGE=\"3600\"|" /etc/snapper/configs/root
   sed -i "s|^TIMELINE_LIMIT_HOURLY=.*|TIMELINE_LIMIT_HOURLY=\"0\"|" /etc/snapper/configs/root
-  sed -i "s|^TIMELINE_LIMIT_DAILY=.*|TIMELINE_LIMIT_DAILY=\"10\"|" /etc/snapper/configs/root  # Only keep 10 daily snaps
+  sed -i "s|^TIMELINE_LIMIT_DAILY=.*|TIMELINE_LIMIT_DAILY=\"10\"|" /etc/snapper/configs/root # Only keep 10 daily snaps
   sed -i "s|^TIMELINE_LIMIT_WEEKLY=.*|TIMELINE_LIMIT_WEEKLY=\"0\"|" /etc/snapper/configs/root
   sed -i "s|^TIMELINE_LIMIT_MONTHLY=.*|TIMELINE_LIMIT_MONTHLY=\"0\"|" /etc/snapper/configs/root
   sed -i "s|^TIMELINE_LIMIT_YEARLY=.*|TIMELINE_LIMIT_YEARLY=\"0\"|" /etc/snapper/configs/root
@@ -801,7 +855,7 @@ snapper_config() {
   # but the timer is still happening hourly by default
   # So to configure the timer we have to edit in systemd
   mkdir -p /etc/systemd/system/snapper-timeline.timer.d
-  cat > /etc/systemd/system/snapper-timeline.timer.d/override.conf << 'EOF'
+  cat >/etc/systemd/system/snapper-timeline.timer.d/override.conf <<'EOF'
   [Timer]
   OnCalendar=   # this is important
   OnCalendar=daily
@@ -823,7 +877,7 @@ clean-cache() {
     ) | yay -Scc
   '
   # The first option needs to be an "n" otherwise buggy pacman throws an error
-}  
+}
 
 cleanup() {
   log "Doing cleanup..."
@@ -879,4 +933,3 @@ main() {
 }
 
 main "$@"
-
