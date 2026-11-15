@@ -327,6 +327,9 @@ user_environment() {
   echo "Overriding sudoers systemd_editor..."
   echo 'Defaults env_keep += "SYSTEMD_EDITOR"' >/etc/sudoers.d/20-systemd_editor
   chmod 440 /etc/sudoers.d/20-systemd_editor
+  echo "Disabling sudo password-waiting timeout..." # this is the password waiting timeout, not the cache timeout
+  echo 'Defaults passwd_timeout=0' >/etc/sudoers.d/30-passwd-prompt
+  chmod 440 /etc/sudoers.d/30-passwd-prompt
 
   log "Enabling SysRq..."
   echo "kernel.sysrq=1" >/etc/sysctl.d/99-sysctl.conf
