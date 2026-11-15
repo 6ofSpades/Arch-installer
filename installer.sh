@@ -455,9 +455,11 @@ EOF
   if [[ "$syncthing" == "y" ]]; then
     su - "$username" -c '
       yay -S --needed --noconfirm \
-        syncthing
+        syncthing syncthingtray
       '
-    systemctl enable --now "syncthing@$username.service"
+    # systemctl enable --now "syncthing@$username.service"
+    # that one is for servers
+    systemctl --user enable --now syncthing.service
     echo "Syncthing enabled"
   fi
 
@@ -764,6 +766,12 @@ extras() {
   nmap
   wireshark-qt
   speedtest-cli
+  ethtool
+
+  ### Printer stuff
+  cups
+  cups-pdf
+  avahi
 
   ### Misc thingys...?
   yt-dlp
@@ -890,6 +898,25 @@ cleanup() {
   systemctl enable NetworkManager
   systemctl enable grub-btrfsd
   systemctl enable snapper-timeline.timer snapper-cleanup.timer
+
+  gum confirm --default "$prompt" && systemctl enable sshd || echo "Skipping..."
+
+  log "Setting Cloudflare's DNS on current connection..."
+  selected_conn=""
+  while [ -z "$selected_conn" ]; do
+    selected_conn=$(nmcli -g NAME connection show | gum choose --header "Select your network connection:")
+
+    if [ -z "$selected_conn" ]; then
+      echo "Select a connection. Immediately." >&2
+      sleep 1
+    fi
+  done
+  # Apply Cloudflare IPv4 & IPv6 settings
+  sudo nmcli connection modify "$selected_conn" ipv4.dns "1.1.1.1,1.0.0.1"
+  sudo nmcli connection modify "$selected_conn" ipv4.ignore-auto-dns yes
+  sudo nmcli connection modify "$selected_conn" ipv6.dns "2606:4700:4700::1111"
+  sudo nmcli connection modify "$selected_conn" ipv6.ignore-auto-dns yes
+  echo "Cloudflare DNS configured successfully for: $selected_conn"
 
   echo "Restoring sudo to password-protected mode..."
   rm -f /etc/sudoers.d/99-wheel-nopasswd
