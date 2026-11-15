@@ -899,6 +899,7 @@ cleanup() {
   systemctl enable grub-btrfsd
   systemctl enable snapper-timeline.timer snapper-cleanup.timer
 
+  prompt="Enable SSH service?"
   gum confirm --default "$prompt" && systemctl enable sshd || echo "Skipping..."
 
   log "Setting Cloudflare's DNS on current connection..."
